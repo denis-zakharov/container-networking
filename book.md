@@ -188,6 +188,9 @@ The WeaveNet uses a more sophisticated software L2-L3 switch
 (Open vSwitch) instead of an old Linux bridge but essentially
 it is still a VXLAN tunnel under the hood.
 
+![Multihost VXLAN Network](https://i.imgur.com/b46pyLK.png)
+
+
 On host0:
 ```shell=
 sudo ip link add vxlan0 \
@@ -222,6 +225,8 @@ sudo ip netns exec netns0 ping -c2 192.168.0.10
 # On host0
 sudo tcpdump -i ens160 -XX port 4789
 ```
+
+TODO: C-to-C multicast.
 
 Calico Overlay Network
 ---
