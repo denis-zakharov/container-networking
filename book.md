@@ -34,11 +34,18 @@ new CGroup API since Linux kernel 3.16 (Aug 3, 2014).
 Single-Host Net
 ---
 We start with a single host network which provides connectivity:
-- container-to-container on the same host
-- host to a network
-- container to a network
+- a container-to-container connectivity on the same host
+- a container to a network
+- a network to a container via a port publishing
 
-![Single Host](https://i.imgur.com/IvD1UhQ.png)
+Note. Here 'a network' is an undelying physical network with
+a host-to-host connectivity.
+
+The overlay POD network subnet is 192.168.0.0/16.
+Allocated subnets per two hosts: 192.168.0.0/24 and 192.168.1.0/24.
+
+![Single Host](https://i.imgur.com/gK0xwyW.png)
+
 
 Create network namespaces
 ```shell
@@ -59,7 +66,7 @@ sudo ip link add veth1 type veth peer name ceth1
 ```
 
 Move container ethernet devices to their namespaces.
-Assign IP addresses.
+Assign IP addresses to containers.
 ```shell=
 sudo ip link set ceth0 netns netns0
 sudo ip link set ceth1 netns netns1
@@ -68,14 +75,14 @@ sudo ip link set ceth1 netns netns1
 sudo nsenter --net=/var/run/netns/netns0
 ip link set lo up
 ip link set ceth0 up
-ip addr add 192.168.0.10/24 dev ceth0
+ip addr add 192.168.0.10/16 dev ceth0
 exit
 
 # netns1
 sudo nsenter --net=/var/run/netns/netns1
 ip link set lo up
 ip link set ceth1 up
-ip addr add 192.168.0.11/24 dev ceth1
+ip addr add 192.168.0.11/16 dev ceth1
 exit
 ```
 
@@ -91,8 +98,137 @@ sudo ip link set veth0 up
 sudo ip link set veth1 up
 ```
 
-C-to-C L2 connectivity
+**C-to-C L2 connectivity**
 ```shell=
 sudo ip netns exec netns0 ping -c2 192.168.0.11
 sudo ip netns exec netns1 ip neigh  # ARP cache
 ```
+
+**C-to-root L3 connectivity**
+```shell=
+sudo ip addr add 192.168.0.1/16 brd + dev cbr0
+
+# default route via cbr0
+sudo ip netns exec netns0 ip route add default via 192.168.0.1
+sudo ip netns exec netns1 ip route add default via 192.168.0.1
+sudo ip netns exec netns0 ping -c2 10.198.16.144
+```
+
+**C-to-network L3 connectivity**
+Enable IP-forwarding and traffic filtering over bridged networks
+on the host.
+
+```shell=
+# enable ip forwarding for NAT
+sudo bash -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
+# enable bridge traffic interseption
+sudo modprobe br_netfilter
+sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-arptables'
+sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables'
+```
+
+Enable source NAT for outbound traffic from a container subnet.
+```shell=
+# source NAT container subnet for outbound traffic
+# filter out C-to-C traffic i.e. the out interface is not the cbr0
+sudo iptables -t nat -A POSTROUTING \
+    -s 192.168.0.0/16 ! -o cbr0 \
+    -j MASQUERADE
+```
+
+We use the 'default - allow' strategy. In the real world,
+container runtimes use the 'default - deny' strategy and enable
+routing only for known paths.
+
+**Net-to-C L3 connectivity**
+Publishing a port in a root namespace allows to forward
+inbound host traffic to a concrete container using
+a source NAT.
+
+For example, we publish netns0:5000 as rootns:5000.
+```shell=
+# External traffic
+sudo iptables -t nat -A PREROUTING \
+    -d 10.198.16.144 \
+    -p tcp -m tcp --dport 5000
+    -j DNAT --to-destination 192.168.0.10:5000
+    
+# Local traffic (since it does not pass the PREROUTING chain)
+sudo iptables -t nat -A OUPUT \
+    -d 10.198.16.144 \
+    -p tcp -m tcp --dport 5000
+    -j DNAT --to-destination 192.168.0.10:5000
+```
+
+**Resources**
+- https://iximiuz.com/en/posts/container-networking-is-simple/
+- https://developers.redhat.com/blog/2018/10/22/introduction-to-linux-interfaces-for-virtual-networking
+
+
+VXLAN Overlay Network
+---
+VXLAN is a tunelling protocol that allows to span L2 network
+over several underlying physical networks
+(essentialy creating a giant switch).
+
+The ethernet frame (starting with a special VXLAN header)
+from the overlay container network are
+encapsulated into a UPD packet.
+
+Almost all popular CNIs support VXLAN as an overlay backend:
+- flannel
+- weave
+- calico (in addition to default IP-IP tunelling mode)
+
+CNI plugins collect a network topology (from K8s API or
+by peering as WeaveNet), configure VXLAN interfaces on
+hosts and allocate IP subnet for pods on each host.
+
+The WeaveNet uses a more sophisticated software L2-L3 switch
+(Open vSwitch) instead of an old Linux bridge but essentially
+it is still a VXLAN tunnel under the hood.
+
+On host0:
+```shell=
+sudo ip link add vxlan0 \
+    type vxlan id 1 \
+    remote 10.198.16.227 \
+    dstport 4789 dev ens160
+sudo ip link set vxlan0 up
+sudo ip link set vxlan0 master cbr0
+```
+
+On host1:
+```shell=
+sudo ip link add vxlan0 \
+    type vxlan id 1 \
+    remote 10.198.16.144 \
+    dstport 4789 dev ens160
+sudo ip link set vxlan0 up
+sudo ip link set vxlan0 master cbr0
+```
+
+Forwarding table
+```shell=
+bridge fdb show
+```
+
+Verify VXLAN
+```shell=
+# On host1
+ping -c2 192.168.0.10
+sudo ip netns exec netns0 ping -c2 192.168.0.10
+
+# On host0
+sudo tcpdump -i ens160 -XX port 4789
+```
+
+Calico Overlay Network
+---
+TODO:
+IP-in-IP tunnel
+Direct
+
+Kubernetes Services
+---
+TODO: eBPF vs IPTables vs IP Virtual Server
