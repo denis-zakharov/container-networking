@@ -239,8 +239,7 @@ sudo nsenter --net=/var/run/netns/netns0 bash
 
 IP-in-IP Overlay Network
 ---
-![MultiHost IPIP Tunneling](https://i.imgur.com/RWArxv8.png)
-
+![MultiHost IPIP Tunneling](https://i.imgur.com/RoTJEv5.png)
 
 On host0:
 ```shell=
