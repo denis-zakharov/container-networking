@@ -269,6 +269,9 @@ Routed Overlay Network in an L2 segment
 We can directly route pod subnets between hosts in the same
 L2 network.
 
+![Multihost Direct Routing in L2](https://i.imgur.com/GhHuhZX.png)
+
+
 On host0:
 ```shell=
 sudo ip route add 172.30.1.0/24 via 10.198.16.227 dev ens160
