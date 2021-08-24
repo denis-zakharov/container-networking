@@ -266,7 +266,18 @@ sudo ip route add 172.20.0.0/24 via 172.20.255.1 dev ipip1
 
 Routed Overlay Network in an L2 segment
 ---
-TODO
+We can directly route pod subnets between hosts in the same
+L2 network.
+
+On host0:
+```shell=
+sudo ip route add 172.30.1.0/24 via 10.198.16.227 dev ens160
+```
+
+On host1:
+```shell=
+sudo ip route add 172.30.0.0/24 via 10.198.16.144 dev ens160
+```
 
 Kubernetes Services
 ---
