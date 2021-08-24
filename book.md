@@ -228,8 +228,13 @@ sudo tcpdump -i ens160 -XX port 4789
 
 [Python multicast example on UDP sockets](https://huichen-cs.github.io/course/CISC7334X/20FA/lecture/pymcast/)
 ```shell=
-./mcastrecv.py <nic_ip> 234.3.2.1 50001
-./mcastsend.py <nic_ip> 234.3.2.1 50001 'Test message'
+# On Host0
+sudo nsenter --net=/var/run/netns/netns0 bash
+./mcastrecv.py 192.168.0.10 234.3.2.1 50001
+
+# On Host1
+sudo nsenter --net=/var/run/netns/netns0 bash
+./mcastsend.py 192.168.1.10 234.3.2.1 50001 'Test message'
 ```
 
 IP-in-IP Overlay Network
