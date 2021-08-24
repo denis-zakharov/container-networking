@@ -226,13 +226,40 @@ sudo ip netns exec netns0 ping -c2 192.168.0.10
 sudo tcpdump -i ens160 -XX port 4789
 ```
 
-TODO: C-to-C multicast.
+[Python multicast example on UDP sockets](https://huichen-cs.github.io/course/CISC7334X/20FA/lecture/pymcast/)
+```shell=
+./mcastrecv.py <nic_ip> 234.3.2.1 50001
+./mcastsend.py <nic_ip> 234.3.2.1 50001 'Test message'
+```
 
-Calico Overlay Network
+IP-in-IP Overlay Network
 ---
-TODO:
-IP-in-IP tunnel
-Direct
+On host0:
+```shell=
+sudo ip link add name ipip1 type ipip local 10.198.16.144 remote 10.198.16.227
+sudo ip link set ipip1 up
+sudo ip addr add 172.20.255.1/30 dev ipip1
+sudo ip route add 172.20.1.0/24 via 172.20.255.2 dev ipip1
+```
+
+On host1:
+```shell=
+sudo ip link add name ipip1 type ipip local 10.198.16.227 remote 10.198.16.144
+sudo ip link set ipip1 up
+sudo ip addr add 172.20.255.2/30 dev ipip1
+sudo ip route add 172.20.0.0/24 via 172.20.255.1 dev ipip1
+```
+
+**Resources**
+- https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-ip-tunnels_configuring-and-managing-networking
+- https://itnext.io/kubernetes-network-deep-dive-7492341e0ab5
+- [Packet Walks in K8s](https://github.com/jayakody/ons-2019)
+- [Service Mesh: todo and not todo](https://github.com/jayakody/ones-2020)
+- [Pod-to-Pod: Cisco blog](https://blogs.cisco.com/developer/kubernetes-intro-2)
+
+Routed Overlay Network in an L2 segment
+---
+TODO
 
 Kubernetes Services
 ---
