@@ -234,6 +234,9 @@ sudo tcpdump -i ens160 -XX port 4789
 
 IP-in-IP Overlay Network
 ---
+![MultiHost IPIP Tunneling](https://i.imgur.com/RWArxv8.png)
+
+
 On host0:
 ```shell=
 sudo ip link add name ipip1 type ipip local 10.198.16.144 remote 10.198.16.227
