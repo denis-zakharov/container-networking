@@ -259,6 +259,7 @@ sudo ip route add 172.20.0.0/24 via 172.20.255.1 dev ipip1
 
 **Resources**
 - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-ip-tunnels_configuring-and-managing-networking
+- https://developers.redhat.com/blog/2019/05/17/an-introduction-to-linux-virtual-interfaces-tunnels
 - https://itnext.io/kubernetes-network-deep-dive-7492341e0ab5
 - [Packet Walks in K8s](https://github.com/jayakody/ons-2019)
 - [Service Mesh: todo and not todo](https://github.com/jayakody/ones-2020)
@@ -282,6 +283,6 @@ On host1:
 sudo ip route add 172.30.0.0/24 via 10.198.16.144 dev ens160
 ```
 
-Kubernetes Services
----
-TODO: eBPF vs IPTables vs IP Virtual Server
+**Resources**
+- [Calico Routing Modes](https://octetz.com/docs/2020/2020-10-01-calico-routing-modes/)
+- [Container Networking](https://tanzu.vmware.com/developer/guides/kubernetes/container-networking/)
