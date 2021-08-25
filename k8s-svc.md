@@ -48,8 +48,9 @@ the other proxy modes, IPVS mode also supports a higher throughput of network tr
 
 Cilium CNI and eBPF
 ---
-eBPF is a higly efficient sandboxed virtual machine in the Linux kernel making the Linux kernel
-programmable at native execution speed.
+[eBPF](https://ebpf.io/) is a higly efficient sandboxed virtual machine
+in the Linux kernel making the Linux kernel programmable at native
+execution speed.
 
 Using eBPF, Cilium CNI plugin implements Kubernetes services without kube-proxy/netfilter/iptables.
 
@@ -65,3 +66,4 @@ iptables overhead:
 - [TGI Kubernetes: Troubleshooting Container Networking (Video)](https://youtu.be/IhbJ3ll4usI)
 - [How to Make Linux Microservice-Aware with Cilium and eBPF (Video)](https://youtu.be/_Iq1xxNZOAo)
 - [Liberating Kubernetes From Kube-proxy and Iptables - Martynas Pumputis, Cilium (Video)](https://youtu.be/bIRwSIwNHC0)
+- [Liberating Kubernetes From Kube-proxy and Iptables (Slides)](https://sched.co/Uaam)
