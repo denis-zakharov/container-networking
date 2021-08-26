@@ -171,9 +171,9 @@ VXLAN is a tunelling protocol that allows to span L2 network
 over several underlying physical networks
 (essentialy creating a giant switch).
 
-The ethernet frame (starting with a special VXLAN header)
+The ethernet frames (starting with a special VXLAN header)
 from the overlay container network are
-encapsulated into a UPD packet.
+encapsulated into a UDP packet.
 
 Almost all popular CNIs support VXLAN as an overlay backend:
 - flannel
@@ -181,7 +181,7 @@ Almost all popular CNIs support VXLAN as an overlay backend:
 - calico (in addition to default IP-IP tunelling mode)
 
 CNI plugins collect a network topology (from K8s API or
-by peering as WeaveNet), configure VXLAN interfaces on
+by peering as WeaveNet or combining both methods), configure VXLAN interfaces on
 hosts and allocate IP subnet for pods on each host.
 
 The WeaveNet uses a more sophisticated software L2-L3 switch
@@ -239,6 +239,13 @@ sudo nsenter --net=/var/run/netns/netns0 bash
 
 IP-in-IP Overlay Network
 ---
+The IP-in-IP tunnel is typically used to connect two internal IPv4 subnets through public IPv4 internet.
+
+In this case, we connect two pod subnets over the underlying network.
+
+The IPIP tunnel has the lowest overhead but can only transmit IPv4 unicast traffic.
+That means you cannot send multicast via IPIP tunnel.
+
 ![MultiHost IPIP Tunneling](https://i.imgur.com/RoTJEv5.png)
 
 On host0:
