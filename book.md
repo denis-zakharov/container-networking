@@ -286,3 +286,8 @@ sudo ip route add 172.30.0.0/24 via 10.198.16.144 dev ens160
 **Resources**
 - [Calico Routing Modes](https://octetz.com/docs/2020/2020-10-01-calico-routing-modes/)
 - [Container Networking](https://tanzu.vmware.com/developer/guides/kubernetes/container-networking/)
+
+
+Join container interface to an existing network
+---
+- [Bridge vs MACVLAN vs IPVLAN](https://hicu.be/category/networking)
