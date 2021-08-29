@@ -31,7 +31,9 @@ Connection (*flows*) are identified as a tuple:
 
 *src addr, src port, dst addr, dst port, L4 proto*
 
-Hashmap (a tuple to a flow) size is configurable.
+Hashmap (a tuple to a flow) size is configurable:
+- /proc/sys/net/nf_conntrack_max flows
+- /sys/module/nf_conntrack/parameters/hashsize
 
 ## Conntrack states
 
@@ -73,7 +75,7 @@ src=10.0.0.1 dst=10.0.0.2 sport=49431 dport=22 [ASSURED] mark=0 use=1
 
 *Chains* are a list of rules. The rules in each chain are evaluated until a terminating target.
 
-The built-in top-level chains are directly mapped to the netfilter hooks.
+The built-in top-level chains are *directly mapped to the netfilter hooks*.
 
 Although tables have chains the order of execution is 'chains then tables'.
 
@@ -116,15 +118,75 @@ Targets and tables where they can be applied.
 
 ## iptables commands
 
-```shell=
-iptables -t <table> -L --line-numbers
+The default table is `filter`.
 
-# append, check, delete
-iptables [-t table] {-A|-C|-D} chain rule-spec
+```shell=
+# list all rules in the selected table
+# (all chains if not explicitly given with a chane name)
+iptables -t <table> -L [chain] --line-numbers
+
+# append, check, delete, replace _rules_
+iptables [-t table] {-A|-C|-D|-R} chain rule-spec
 
 # insert a new rule into a line 2 moving down an existing rule
 iptables -t nat -I POSTROUTING 2 <rule-spec>
 ```
 
+Other flags:
+* -n no DNS lookup
+* -S [chain], --list-rules [chain] print all rules in the selected chain or all chains.
+  A short form of `-L`; `iptables-save` format.
+* -F [chain], --flush [chain]
+* -X [chain], --delete-chain [chain] delete the user-defined chain
+* -E, --rename-chain [old] [new_name]
+
+## subchains
+Subchains are set of custom rules grouped together for reuse (similar to a function).
+
+Filter chains end in a default action, e.g. `DROP` the packet if no prior target matched.
+
+Chains will default to `ACCEPT` if no default is specified.
+
+`iptables -P <chain> <target>` sets the default target for a chain.
+
+```shell=
+# Create incoming-ssh chain.
+$ iptables -N incoming-ssh
+
+# Allow packets from specific IPs.
+$ iptables -A incoming-ssh -s 10.0.0.1 -j ACCEPT
+$ iptables -A incoming-ssh -s 10.0.0.2 -j ACCEPT
+
+# Log the packet.
+$ iptables -A incoming-ssh -j LOG --log-level info --log-prefix "ssh-failure "
+
+# Drop packets from all other IPs.
+$ iptables -A incoming-ssh -j DROP
+
+# Evaluate the incoming-ssh chain, if the packet is an 
+# inbound TCP packet addressed to port 22.
+$ iptables -A INPUT -p tcp --dport 22 -j incoming-ssh
+```
+
+**Resources**
+- [iptables tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+
 # IP Virtual Server
-TODO
+
+![IPVS](https://i.imgur.com/4qIxug1.png)
+
+IPVS supports packet forwarding modes:
+- NAT
+- DR (direct routing in L2)
+- IP-in-IP tunneling
+
+```shell=
+# {-A,-E,-D} add, edit, delete a VIP
+# {-a,-e,-d} add, edit, delete a backend IP
+ipvsadm -A -t 1.1.1.1:80 -s lc
+ipvsadm -a -t 1.1.1.1:80 -r 2.2.2.2 -m -w 100
+ipvsadm -a -t 1.1.1.1:80 -r 3.3.3.3 -m -w 100
+
+# list configuration
+ipvsadm -L --stats
+```
