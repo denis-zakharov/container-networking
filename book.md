@@ -237,6 +237,9 @@ sudo nsenter --net=/var/run/netns/netns0 bash
 ./mcastsend.py 192.168.1.10 234.3.2.1 50001 'Test message'
 ```
 
+**Resources**
+- [IP Multicast Lectures](https://youtube.com/playlist?list=PLVND-cRwt9SNw9_EIK4GGDBAT0wtz0xSC)
+
 IP-in-IP Overlay Network
 ---
 The IP-in-IP tunnel is typically used to connect two internal IPv4 subnets through public IPv4 internet.
